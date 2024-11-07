@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.dhbin.isme.pms.mapper.OrderMapper">
+    <select id="orderDetail" resultType="cn.dhbin.isme.pms.domain.dto.OrderDetailDto">
+        select o.order_id as orderId,
+               o.product_name as productName,
+               o.product_quant as productQuant,
+               o.create_time as createTime,
+               o.down_time as downTime,
+               o.address as address,
+               o.rec_name as recName,
+               o.rec_phone as recPhone,
+               o.status as status,
+
+               ode.ware_id as wareId,
+               ode.create_time as wareAcpTime,
+               ode.update_time as wareOutTime,
+               ode.ware_address as wareAddress,
+
+               ode.ware_phone as warePhone,
+               ode.ware_nickname as wareNickName,
+
+               od.car_id as carId,
+               od.driver_name as driverName,
+               od.create_time as driverAcpTime,
+               od.start_time as driverStartTime,
+               od.arrive_time as driverArriveTime,
+               od.img_list as imgList,
+
+               p.phone as driverPhone,
+
+               bo.basket_list as basketList
+        from `order` o
+                  left join order_drivers od on o.order_id = od.order_id
+                  left join order_depot ode on o.order_id = ode.order_id
+                  left join profile p on od.driver_id = p.userId
+                  left join basket_order bo on o.order_id = bo.order_id
+        <where>
+            o.order_id = #{orderId}
+        </where>
+    </select>
+
+    <select id="queryHisOrders" resultType="cn.dhbin.isme.pms.domain.dto.HisOrdersDto">
+        select o.order_id as orderId,
+        o.product_name as productName,
+        o.product_quant as productQuant,
+        o.create_time as createTime,
+        o.ware_id as wareId,
+        o.ware_acp_time as wareAcpTime,
+        o.ware_out_time as wareOutTime,
+        o.down_time as downTime,
+        od.car_id as carId,
+        od.driver_name as driverName,
+        od.create_time as driverAcpTime,
+        od.start_time as driverStartTime,
+        od.arrive_time as driverArriveTime,
+        p.phone as driverPhone,
+        pr.nickName as storeNickName,
+        u.username as storeUserName
+        from `order` o
+        left join order_drivers od on o.order_id = od.order_id
+        left join profile p on od.driver_id = p.userId
+        left join profile pr on o.store_id = pr.userId
+        left join user u on o.store_id = u.id
+        <where>
+            <choose>
+                <when test="role == 'store'">
+                    o.store_id = #{userId}
+                </when>
+                <when test="role == 'driver'">
+                    od.driver_id = #{userId}
+                </when>
+                <when test="role == 'depot'">
+                    o.ware_id = #{userId}
+                </when>
+                <otherwise>
+                    1 = 1
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="queryType =='unDown'">
+                    AND o.status != 'storeAcp'
+                </when>
+            </choose>
+        </where>
+    </select>
+</mapper>

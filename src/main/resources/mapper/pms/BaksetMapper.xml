@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.dhbin.isme.pms.mapper.BasketMapper">
+    <insert id="insertBatchBasket">
+        INSERT INTO basket (basket_rfid, user_id, create_time, update_time)
+        VALUES
+        <foreach collection="basketList" item="baskRfid" separator=",">
+             (#{baskRfid}, #{userId}, NOW(), NOW())
+        </foreach>
+        ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), update_time = NOW()
+    </insert>
+
+    <update id="rukuBatchBasket">
+        UPDATE basket SET user_id = #{userId}, update_time = NOW(), status = #{status} WHERE basket_rfid = #{baskRfid}
+    </update>
+
+    <select id="queryBasketSingle" resultType="cn.dhbin.isme.pms.domain.dto.BasketInfoDto">
+        select b.basket_rfid as basketRfid,
+        b.create_time as createTime,
+        b.update_time as updateTime,
+        b.status as status,
+        b.user_id as userId,
+        pr.address as basketLoc,
+        u.role as role
+        from `basket` b
+        left join profile pr on b.user_id = pr.userId
+        left join user u on b.user_id = u.id
+        <where>
+            <if test="queryColumn != null and queryColumn != '' and queryCondition != null and queryCondition != ''">
+                AND ${queryColumn} LIKE CONCAT('%', #{queryCondition}, '%')
+            </if>
+        </where>
+    </select>
+
+<!--    <update id="modifyBatchBasket">-->
+<!--        UPDATE basket-->
+<!--        SET status = #{status}, user_id = #{userId}, order_id = #{orderId}-->
+<!--        WHERE basket_rfid IN-->
+<!--        <foreach item="basketRfid" collection="basketList" open="(" separator="," close=")">-->
+<!--            #{basketRfid}-->
+<!--        </foreach>-->
+<!--    </update>-->
+
+<!--    <update id="modifyBatchBasket">-->
+<!--        UPDATE basket-->
+<!--        <trim suffixOverrides="WHERE ">-->
+<!--            <if test="status != null">-->
+<!--                status = #{status},-->
+<!--            </if>-->
+<!--            <if test="userId != null">-->
+<!--                user_id = #{userId},-->
+<!--            </if>-->
+<!--            <if test="orderId != null">-->
+<!--                order_id = #{orderId},-->
+<!--            </if>-->
+<!--            WHERE basket_rfid IN-->
+<!--            <foreach item="basketRfid" collection="basketList" open="(" separator="," close=")">-->
+<!--                #{basketRfid}-->
+<!--            </foreach>-->
+<!--        </trim>-->
+<!--    </update>-->
+    <update id="modifyBatchBasket">
+        UPDATE basket
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="orderId != null">
+                order_id = #{orderId},
+            </if>
+            update_time = NOW()
+        </set>
+        WHERE basket_rfid IN
+        <foreach item="basketRfid" collection="basketList" open="(" separator="," close=")">
+            #{basketRfid}
+        </foreach>
+    </update>
+</mapper>
